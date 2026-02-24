@@ -31,8 +31,9 @@ public:
  //   Q_INVOKABLE QVariantMap obterDetalhesFornecedor(int index);
 
     Q_INVOKABLE QVariantMap getUsuarioLogado();
+    Q_INVOKABLE QVariantList atualizarListaFornecedores(const QString& termo);
 
-//    Q_INVOKABLE void fazerLogout();
+    Q_INVOKABLE void fazerLogout();
 
 //    Q_INVOKABLE int getIndiceFornecedor(const QString& nome);
 
