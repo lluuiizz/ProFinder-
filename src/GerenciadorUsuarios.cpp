@@ -36,12 +36,12 @@ QString GerenciadorUsuarios::cadastrarCliente(const QString& nome, const QString
     return "Cliente Cadastrado com sucesso!";
 }
 
-QString GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil, const QString& certificado, const QStringList& fotosServico, const QString& descricao, QVariantMap& servicos) {
+QString GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil, const QString& certificado, const QStringList& fotosServico, const QString& descricao, QVariantMap servicos) {
     // TODO: Implement the cadastrarFornecedor() Method
     if (nome == "") return "Erro: Preencha o campo Nome!";
 
 
-    if (email.contains("@")) return "Erro: Insira um Email Válido!";
+    if (!email.contains("@")) return "Erro: Insira um Email Válido!";
 
     if (cpf == "") return "Erro: Preencha o campo CPF!";
 
