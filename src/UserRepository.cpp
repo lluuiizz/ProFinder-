@@ -4,6 +4,8 @@
 
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QJsonDocument>
+#include <QJsonArray>
 #include <QDebug>
 
 bool prepareInsertIntoUsuarios(QSqlQuery &_query, const Usuario &_user); // USED FOR INSERT INTO USUARIOS TABLE
@@ -156,6 +158,82 @@ Usuario* UserRepository::loginUser(const QString &email, const QString &cpf) {
     if (!assert_success) return nullptr;
     return new Fornecedor(_nome, _email, _cpf, _dataNasc, _fotoPerfil, certificado, fotos_path_list, descricao, servicos_map, _id);
 
+}
+
+QVariantList UserRepository::getSuppliersBySearchTerm(const QString& termo) {
+    QVariantList listaFornecedores;
+    QSqlQuery query;
+
+    // A query agora possui o parâmetro :termo
+    QString sql = R"(
+        SELECT
+            u.id, u.nome, u.email, u.cpf, u.data_nascimento, u.foto_perfil,
+            f.cpf_cnpj, f.certificado_antecedentes, f.descricao_trabalho,
+            (SELECT json_agg(ff.foto) FROM fornecedor_fotos ff WHERE ff.fornecedor_id = u.id) AS fotos_servico,
+            (SELECT json_agg(json_build_object('nome_servico', fs.nome_servico, 'anos_experiencia', fs.anos_experiencia))
+             FROM fornecedor_servicos fs WHERE fs.fornecedor_id = u.id) AS servicos
+        FROM usuarios u
+        JOIN fornecedores f ON u.id = f.usuario_id
+        WHERE u.tipo_usuario = 'FORNECEDOR'
+          AND (
+              u.nome ILIKE :termo
+              OR f.descricao_trabalho ILIKE :termo
+              OR EXISTS (
+                  SELECT 1 FROM fornecedor_servicos fs2
+                  WHERE fs2.fornecedor_id = u.id AND fs2.nome_servico ILIKE :termo
+              )
+          );
+    )";
+
+    // Prepara a query
+    if (!query.prepare(sql)) {
+        qDebug() << "Erro ao preparar a busca de fornecedores:" << query.lastError().text();
+        return listaFornecedores;
+    }
+
+    // Faz o bind do termo, adicionando os '%' para buscar em qualquer parte do texto
+    QString termoBusca = "%" + termo + "%";
+    query.bindValue(":termo", termoBusca);
+
+    // Executa a query
+    if (!query.exec()) {
+        qDebug() << "Erro ao executar a busca de fornecedores:" << query.lastError().text();
+        return listaFornecedores;
+    }
+
+    while (query.next()) {
+        QVariantMap fornecedor;
+
+        fornecedor["id"] = query.value("id").toInt();
+        fornecedor["nome"] = query.value("nome").toString();
+        fornecedor["email"] = query.value("email").toString();
+        fornecedor["cpf"] = query.value("cpf").toString();
+        fornecedor["data_nascimento"] = query.value("data_nascimento").toDate();
+        fornecedor["foto_perfil"] = query.value("foto_perfil").toString();
+        fornecedor["cpf_cnpj"] = query.value("cpf_cnpj").toString();
+        fornecedor["certificado_antecedentes"] = query.value("certificado_antecedentes").toString();
+        fornecedor["descricao_trabalho"] = query.value("descricao_trabalho").toString();
+
+        QString fotosJson = query.value("fotos_servico").toString();
+        if (!fotosJson.isEmpty()) {
+            QJsonDocument doc = QJsonDocument::fromJson(fotosJson.toUtf8());
+            fornecedor["fotos_servico"] = doc.array().toVariantList();
+        } else {
+            fornecedor["fotos_servico"] = QVariantList();
+        }
+
+        QString servicosJson = query.value("servicos").toString();
+        if (!servicosJson.isEmpty()) {
+            QJsonDocument doc = QJsonDocument::fromJson(servicosJson.toUtf8());
+            fornecedor["servicos"] = doc.array().toVariantList();
+        } else {
+            fornecedor["servicos"] = QVariantList();
+        }
+
+        listaFornecedores.append(fornecedor);
+    }
+
+    return listaFornecedores;
 }
 
 bool prepareInsertIntoUsuarios(QSqlQuery &_query, const Usuario &_user) {
