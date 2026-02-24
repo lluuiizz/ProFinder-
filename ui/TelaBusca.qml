@@ -63,6 +63,20 @@ Page {
                 visible: fornecedorSelecionadoIndex < 0
             }
 
+            Button{
+                text: "Abrir Chat"
+                highlighted: true
+
+                // CONFIGURAÇÃO DO BOTÃO PARA CHAMAR A TELA DE CHAT
+                onClicked: {
+                    stackView.push("TelaChat.qml", {
+
+                    })
+                }
+
+
+            }
+
             Button {
                 text: "Sair"
                 visible: fornecedorSelecionadoIndex < 0
@@ -287,19 +301,7 @@ Page {
                     }
                 }
 
-                Button{
-                    text: "Abrir Chat"
-                    highlighted: true
 
-                    // CONFIGURAÇÃO DO BOTÃO PARA CHAMAR A TELA DE CHAT
-                    onClicked: {
-                        stackView.push("TelaChat.qml", {
-
-                        })
-                    }
-
-
-                }
 
 
                 // Back Button
