@@ -271,9 +271,9 @@ Page {
                 text: "Cadastrar"
                 onClicked: {
 
-                    let sucesso = null;
+                    let returned_values = {};
                     if (tipoCombo.currentText === "Cliente") {
-                        sucesso = gerenciador.cadastrarCliente(
+                        returned_values = gerenciador.cadastrarCliente(
                             nomeInput.text, 
                             emailInput.text,
                             cpfInput.text,
@@ -294,7 +294,7 @@ Page {
                             fotosList.push(fotosServicoList.get(i).path)
                         }
                         
-                        sucesso = gerenciador.cadastrarFornecedor(
+                        returned_values = gerenciador.cadastrarFornecedor(
                             nomeInput.text, 
                             emailInput.text,
                             cpfInput.text,
@@ -307,11 +307,11 @@ Page {
                         );
                     }
 
-                    if (sucesso.includes("Erro:"))
+                    if (returned_values["status"] == false)
                         statusLabel.color = "red";
                     else
                         statusLabel.color = "green"
-                    statusLabel.text = sucesso ;
+                    statusLabel.text = returned_values["message"];
                     // Clear all fields
                     nomeInput.text = ""
                     emailInput.text = ""
