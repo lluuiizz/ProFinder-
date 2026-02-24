@@ -11,7 +11,7 @@ class UserRepository {
     public:
     static qsizetype insertClient(const Cliente& _client);
     static qsizetype insertSupplier(const Fornecedor& _supplier);
-    static Cliente* loginUser(const QString& email, const QString& cpf);
+    static Usuario* loginUser(const QString& email, const QString& cpf);
 
     static bool getUser(int id);
 };
