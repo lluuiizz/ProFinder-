@@ -122,7 +122,12 @@ QVariantMap GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const 
 
         return _return_map;
     }
-
+    if (fotosServico.size() > 5) {
+        QVariantMap erro;
+        erro["status"] = false;
+        erro["message"] = "É permitido o envio de no máximo 5 fotos.";
+        return erro;
+    }
     Fornecedor _user(nome, email, cpf, dataNascimento, fotoPerfil, certificado, fotosServico, descricao, servicos);
     qsizetype _id;
     if ((_id = UserRepository::insertSupplier(_user)) == -1) {
