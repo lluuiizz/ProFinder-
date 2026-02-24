@@ -63,6 +63,9 @@ QVariantMap GerenciadorUsuarios::cadastrarCliente(const QString& nome, const QSt
     _return_map["status"] = true;
     _return_map["message"] = "Cliente Cadastrado com sucesso!";
 
+    emit dadosAlterados();
+    emit clienteAdicionado();
+
     return _return_map;
 }
 
@@ -143,6 +146,8 @@ QVariantMap GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const 
 
     _return_map["status"] = true;
     _return_map["message"] = "Fornecedor Cadastrado com sucesso!";;
+    emit dadosAlterados();
+    emit fornecedorAdicionado();
     return _return_map;
 }
 
@@ -175,8 +180,6 @@ QVariantMap GerenciadorUsuarios::fazerLogin(const QString& email, const QString&
     _login_info["Success"] = 1;
     _login_info["Message"] = "User connected to system!";
     _login_info["Type"] = m_usuarioLogado->getTipo();
-    emit dadosAlterados();
-    emit clienteAdicionado();
     return _login_info;
 }
 
@@ -192,7 +195,15 @@ QVariantMap GerenciadorUsuarios::getUsuarioLogado() {
     return res;
 }
 
-//void GerenciadorUsuarios::fazerLogout() { m_usuarioLogado = nullptr; }
+QVariantList GerenciadorUsuarios::atualizarListaFornecedores(const QString &termo) {
+    QVariantList list_suppliers;
+
+    list_suppliers = UserRepository::getSuppliersBySearchTerm(termo);
+
+    return list_suppliers;
+}
+
+void GerenciadorUsuarios::fazerLogout() { m_usuarioLogado = nullptr; }
 /*
 int GerenciadorUsuarios::getIndiceFornecedor(const QString& nome) {
     // TODO
