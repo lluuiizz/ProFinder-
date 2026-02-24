@@ -13,6 +13,8 @@ class UserRepository {
     static qsizetype insertSupplier(const Fornecedor& _supplier);
     static Usuario* loginUser(const QString& email, const QString& cpf);
 
+    static QVariantList getSuppliersBySearchTerm(const QString& termo);
+
     static bool getUser(int id);
 };
 
