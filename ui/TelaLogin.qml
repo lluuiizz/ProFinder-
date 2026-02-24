@@ -45,16 +45,16 @@ Page {
                 if (resultado.Success == 1) {
                     statusLabel.text = "Conseguimos encontrar o usuário!"
                     statusLabel.color = "green";
-                    // Navigate to appropriate homepage
-                    if (resultado.Type === "CLIENTE") {
-                        stackView.push("TelaBusca.qml")
-                    } else if (resultado.Type === "FORNECEDOR") {
-                        stackView.push("TelaFornecedor.qml")
-                    }
-                } else {
-                    statusLabel.text = resultado.Message;
-                    statusLabel.color = "red"
+
+                    Qt.callLater(function() {
+                        let _user_type = resultado.Type;
+                        if (_user_type == "CLIENTE")
+                            stackView.push("TelaBusca.qml")
+                        else
+                            stackView.push("TelaFornecedor.qml")
+                    })
                 }
+
             }
         }
 
