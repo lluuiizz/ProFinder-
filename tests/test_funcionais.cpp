@@ -121,6 +121,72 @@ private slots:
         result = manager.cadastrarFornecedor("Nome2", "sucesso_desc_cheia@test.com", "987.654.321-00", "1990-02-02", "perfil2.jpg", "cert2.pdf", fotos, "Trabalho bom", servicos);
         QVERIFY(result["status"].toBool() == true);
     }
+    void testBuscaFornecedores() {
+        GerenciadorUsuarios manager;
+
+        // Lista de fotos fictícia para passar na sua validação
+        QStringList fotosValidas;
+        fotosValidas << "foto1.jpg" << "foto2.jpg";
+
+        // --- 1. PREPARAÇÃO DOS DADOS DE TESTE ---
+
+        // Fornecedor 1: Carlos (Eletricista)
+        QVariantMap servicosCarlos;
+        servicosCarlos["Eletricista"] = 10;
+        QVariantMap res1 = manager.cadastrarFornecedor(
+            "Carlos Eletricista", "carlos@email.com", "111.111.111-11", "1980-01-01",
+            "perfil.jpg", "cert.pdf", fotosValidas, "Especialista em fiação residencial", servicosCarlos
+        );
+        QVERIFY2(res1["status"].toBool() == true, "Falha ao cadastrar Carlos");
+
+        // Fornecedor 2: Maria (Encanadora)
+        QVariantMap servicosMaria;
+        servicosMaria["Encanador"] = 5;
+        QVariantMap res2 = manager.cadastrarFornecedor(
+            "Maria Souza", "maria@email.com", "222.222.222-22", "1985-05-05",
+            "perfil.jpg", "cert.pdf", fotosValidas, "Reparo de vazamentos e tubulações", servicosMaria
+        );
+        QVERIFY2(res2["status"].toBool() == true, "Falha ao cadastrar Maria");
+
+        // Fornecedor 3: João (Pintor)
+        QVariantMap servicosJoao;
+        servicosJoao["Pintura"] = 8;
+        QVariantMap res3 = manager.cadastrarFornecedor(
+            "João Reformas", "joao@email.com", "333.333.333-33", "1990-10-10",
+            "perfil.jpg", "cert.pdf", fotosValidas, "Acabamento fino e texturas", servicosJoao
+        );
+        QVERIFY2(res3["status"].toBool() == true, "Falha ao cadastrar João");
+
+        // --- 2 e 3. EXECUÇÃO E VALIDAÇÃO ---
+
+        // Teste A: Busca Vazia (Deve retornar todos os 3 fornecedores)
+        QVariantList resultadosTodos = manager.atualizarListaFornecedores("");
+        QCOMPARE(resultadosTodos.size(), 3);
+
+        // Teste B: Busca por Nome Parcial ignorando maiúsculas (ILIKE u.nome)
+        QVariantList resultadosNome = manager.atualizarListaFornecedores("carlos");
+        QCOMPARE(resultadosNome.size(), 1);
+        QCOMPARE(resultadosNome[0].toMap()["nome"].toString(), QString("Carlos Eletricista"));
+
+        // Teste C: Busca por Descrição do Trabalho (ILIKE f.descricao_trabalho)
+        QVariantList resultadosDesc = manager.atualizarListaFornecedores("vazamentos");
+        QCOMPARE(resultadosDesc.size(), 1);
+        QCOMPARE(resultadosDesc[0].toMap()["nome"].toString(), QString("Maria Souza"));
+
+        // Teste D: Busca por Serviço na tabela relacionada (ILIKE fs.nome_servico)
+        QVariantList resultadosServico = manager.atualizarListaFornecedores("Pintura");
+        QCOMPARE(resultadosServico.size(), 1);
+        QCOMPARE(resultadosServico[0].toMap()["nome"].toString(), QString("João Reformas"));
+
+        // Teste E: Busca por termo que abrange mais de um fornecedor (Ex: a letra "a")
+        // Todos os 3 nomes/descrições têm a letra "a"
+        QVariantList resultadosAmplo = manager.atualizarListaFornecedores("a");
+        QVERIFY(resultadosAmplo.size() > 1);
+
+        // Teste F: Busca Inexistente (Não deve retornar nada)
+        QVariantList resultadosVazios = manager.atualizarListaFornecedores("Astronauta");
+        QCOMPARE(resultadosVazios.size(), 0);
+    }
 };
 
 QTEST_MAIN(TestesFuncionais)
