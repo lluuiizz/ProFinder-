@@ -1,5 +1,6 @@
 #include "../include/database/UserRepository.h"
 #include "../include/database/DatabaseManager.h"
+#include "Fornecedor.h"
 
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -68,7 +69,7 @@ qsizetype UserRepository::insertSupplier(const Fornecedor &_supplier) {
     return _id_returned;
 }
 
-Cliente* UserRepository::loginUser(const QString &email, const QString &cpf) {
+Usuario* UserRepository::loginUser(const QString &email, const QString &cpf) {
 
     QSqlQuery query(DatabaseManager::instance().database());
     if(!query.prepare("SELECT * FROM usuarios WHERE email = :_email AND cpf = :_cpf"))
@@ -80,28 +81,80 @@ Cliente* UserRepository::loginUser(const QString &email, const QString &cpf) {
     if (!query.exec()) {
         qDebug() << "Error at Searching User in the Database!" << query.lastError().text();
         return nullptr;
+    } query.next();
+
+    QString _nome = query.value("nome").toString();
+    QString _email = query.value("email").toString();
+    QString _cpf   = query.value("cpf").toString();
+    QString _dataNasc = query.value("data_nascimento").toString();
+    QString _fotoPerfil = query.value("foto_perfil").toString();
+    QString _tipo_usuario = query.value("tipo_usuario").toString();
+    qsizetype _id = query.value("id").toInt();
+
+
+    if (_tipo_usuario == "CLIENTE")
+        return new Cliente(_nome, _email, _cpf, _dataNasc, _fotoPerfil, _id);
+
+
+    if (!query.prepare("SELECT * FROM fornecedores WHERE usuario_id = :_id")) {
+        qDebug() << "Error while preparing Query to fornecedores: " << query.lastError().text();
+        return nullptr;
+    }   query.bindValue(":_id", _id);
+
+    if (!query.exec()) {
+        qDebug() << "Error while Executing Query to fornecedores: " << query.lastError().text();
+        return nullptr;
     }
 
-    if (query.next()) {
-        QString _nome = query.value("nome").toString();
-        QString _email = query.value("email").toString();
-        QString _cpf   = query.value("cpf").toString();
-        QString _dataNasc = query.value("data_nascimento").toString();
-        QString _fotoPerfil = query.value("foto_perfil").toString();
-        QString _tipo_usuario = query.value("tipo_usuario").toString();
-        qsizetype _id = query.value("id").toInt();
+    if (!query.next()) return nullptr;
+    QString certificado = query.value("certificado_antecedentes").toString();
+    QString descricao   = query.value("descricao_trabalho").toString();
 
+    if (!query.prepare(
+            "SELECT * FROM fornecedor_servicos WHERE fornecedor_id = :_id")) {
+        qDebug() << "Error while preparing Query to fornecedor_servicos: " << query.lastError().text();
+        return nullptr;
+    }   query.bindValue(":_id", _id);
 
-        if (_tipo_usuario == "CLIENTE")
-            return new Cliente(_nome, _email, _cpf, _dataNasc, _fotoPerfil, _id);
-        else
-            // TODO: get supplier fields;
-            return nullptr;
+    if (!query.exec()) {
+        qDebug() << "Error while Executing Query to fornecedor_servicos" << query.lastError().text();
+        return nullptr;
     }
-
     qDebug() << "Error at login User" << query.lastError().text();
 
-    return nullptr;
+
+    QVariantMap servicos_map;
+
+    bool assert_success = false;
+    while (query.next()) {
+        assert_success = true;
+        QString nome_servico = query.value("nome_servico").toString();
+        int anos_experiencia = query.value("anos_experiencia").toInt();
+        servicos_map.insert(nome_servico, anos_experiencia);
+    }
+    if (!assert_success) return nullptr; assert_success = false;
+
+    if (!query.prepare(
+            "SELECT * FROM fornecedor_fotos WHERE fornecedor_id = :_id")) {
+        qDebug() << "Error while preparing Query to fornecedor_fotos: " << query.lastError().text();
+        return nullptr;
+    }   query.bindValue(":_id", _id);
+
+    if (!query.exec()) {
+        qDebug() << "Error while Executing Query to fornecedor_fotos" << query.lastError().text();
+        return nullptr;
+    }
+
+    QStringList fotos_path_list;
+
+    while (query.next()) {
+        assert_success = true;
+        QString path = query.value("foto").toString();
+        fotos_path_list.push_back(path);
+    }
+
+    if (!assert_success) return nullptr;
+    return new Fornecedor(_nome, _email, _cpf, _dataNasc, _fotoPerfil, certificado, fotos_path_list, descricao, servicos_map, _id);
 
 }
 
