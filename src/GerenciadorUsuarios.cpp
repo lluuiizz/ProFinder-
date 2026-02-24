@@ -11,29 +11,59 @@ GerenciadorUsuarios::~GerenciadorUsuarios() {
 }
 
 
-QString GerenciadorUsuarios::cadastrarCliente(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil) {
-    if (nome == "") return "Erro: Preencha o campo Nome!";
+QVariantMap GerenciadorUsuarios::cadastrarCliente(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil) {
+    QVariantMap _return_map;
+    if (nome == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha o campo Nome!";
 
-    if (!email.contains('@') ) return "Erro: Insira um Email Válido!";
+        return _return_map;
+    }
 
-    if (cpf == "") return "Erro: Preencha o campo CPF!";
+    if (!email.contains('@')) {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha com um Email Válido!";
 
-    if (dataNascimento == "") return "Erro: Preencha o campo Data de Nascimento!";
+        return _return_map;
+    }
 
-    if (fotoPerfil == "") return "Erro: Selecione uma foto de perfil!";
+    if (cpf == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha com um CPF válido!";
+
+        return _return_map;
+    }
+
+    if (dataNascimento == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha o Campo Data de Nascimento";
+
+        return _return_map;
+    }
+
+    if (fotoPerfil == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Insira uma foto de perfil";
+    }
 
 
     Cliente _user(nome, email, cpf, dataNascimento, fotoPerfil);
     qsizetype _id;
     if ((_id = UserRepository::insertClient(_user)) == -1) {
-        return "Erro: Cliente não foi cadastrado no Banco de Dados!";
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Cliente não foi cadastrado no Banco de Dados";
+
+        return _return_map;
     };
 
     if (m_usuarioLogado) delete m_usuarioLogado;
     m_usuarioLogado = new Cliente(_user);
     m_usuarioLogado->setId(_id);
 
-    return "Cliente Cadastrado com sucesso!";
+    _return_map["status"] = true;
+    _return_map["message"] = "Cliente Cadastrado com sucesso!";
+
+    return _return_map;
 }
 
 QString GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil, const QString& certificado, const QStringList& fotosServico, const QString& descricao, QVariantMap servicos) {

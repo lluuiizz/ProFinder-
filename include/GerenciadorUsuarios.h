@@ -43,11 +43,11 @@ public:
 
 //    Q_INVOKABLE QVariantList buscarFornecedoresComIndices(const QString& termo);
 
-    Q_INVOKABLE QString cadastrarCliente(const QString& nome, const QString& email,
+    Q_INVOKABLE QVariantMap cadastrarCliente(const QString& nome, const QString& email,
                                       const QString& cpf, const QString& dataNascimento,
                                       const QString& fotoPerfil);
 
-    Q_INVOKABLE QString cadastrarFornecedor(const QString& nome, const QString& email,
+    Q_INVOKABLE QVariantMap cadastrarFornecedor(const QString& nome, const QString& email,
                                          const QString& cpf, const QString& dataNascimento,
                                          const QString& fotoPerfil,
                                          const QString& certificado, const QStringList& fotosServico,
