@@ -66,36 +66,79 @@ QVariantMap GerenciadorUsuarios::cadastrarCliente(const QString& nome, const QSt
     return _return_map;
 }
 
-QString GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil, const QString& certificado, const QStringList& fotosServico, const QString& descricao, QVariantMap servicos) {
-    // TODO: Implement the cadastrarFornecedor() Method
-    if (nome == "") return "Erro: Preencha o campo Nome!";
+QVariantMap GerenciadorUsuarios::cadastrarFornecedor(const QString& nome, const QString& email, const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil, const QString& certificado, const QStringList& fotosServico, const QString& descricao, QVariantMap servicos) {
+     QVariantMap _return_map;
+    if (nome == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha o campo Nome!";
 
+        return _return_map;
+    }
 
-    if (!email.contains("@")) return "Erro: Insira um Email Válido!";
+    if (!email.contains('@')) {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha com um Email Válido!";
 
-    if (cpf == "") return "Erro: Preencha o campo CPF!";
+        return _return_map;
+    }
 
-    if (dataNascimento == "") return "Erro: Preencha o campo Data de Nascimento!";
+    if (cpf == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha com um CPF válido!";
 
-    if (fotoPerfil == "") return "Erro: Selecione uma foto de perfil!";
+        return _return_map;
+    }
 
-    if (certificado == "") return "Erro: Insira um certificado de Antecedentes Criminais!";
+    if (dataNascimento == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Preencha o Campo Data de Nascimento";
 
-    if (fotosServico.isEmpty() ) return "Erro: Você precisa adicionar pelo menos uma foto do seu serviço!";
+        return _return_map;
+    }
 
-    if(servicos.isEmpty()) return "Erro: Você precisa adicionar pelo menos um serviço!";
+    if (fotoPerfil == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Insira uma foto de perfil";
+
+        return _return_map;
+    }
+
+    if (certificado == "") {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Insira um certificado de Antecedentes Criminais!";
+
+        return _return_map;
+    }
+    if (fotosServico.isEmpty()) {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Adicione pelo menos uma foto do seu serviço";
+
+        return _return_map;
+    }
+
+    if (servicos.isEmpty()) {
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Adicione pelo menos um serviço";
+
+        return _return_map;
+    }
 
     Fornecedor _user(nome, email, cpf, dataNascimento, fotoPerfil, certificado, fotosServico, descricao, servicos);
     qsizetype _id;
     if ((_id = UserRepository::insertSupplier(_user)) == -1) {
-        return "Erro: Fornecedor não foi cadastrado no Banco de Dados!";
+        _return_map["status"] = false;
+        _return_map["message"] = "Erro: Fornecedor não foi cadastrado no Banco de Dados!";
+        return _return_map;
     };
 
     if(m_usuarioLogado) delete m_usuarioLogado;
 
     m_usuarioLogado = new Fornecedor(_user);
     m_usuarioLogado->setId(_id);
-    return "Fornecedor Cadastrado com sucesso!";
+
+    _return_map["status"] = true;
+    _return_map["message"] = "Fornecedor Cadastrado com sucesso!";;
+    return _return_map;
 }
 
 QVariantMap GerenciadorUsuarios::fazerLogin(const QString& email, const QString& cpf) {
