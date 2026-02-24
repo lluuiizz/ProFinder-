@@ -51,7 +51,7 @@ public:
                                          const QString& cpf, const QString& dataNascimento,
                                          const QString& fotoPerfil,
                                          const QString& certificado, const QStringList& fotosServico,
-                                         const QString& descricao, QVariantMap& servicos);
+                                         const QString& descricao, QVariantMap servicos);
 signals:
     /**
      * @brief Sinal emitido sempre que o banco de dados JSON/Vetor é modificado.
