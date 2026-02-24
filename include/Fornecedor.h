@@ -29,7 +29,7 @@ public:
      * @param descricaoTrabalho Descrição opcional de como trabalha.
      * @param servicosComAnos Mapa de serviços oferecidos com anos de experiência.
      */
-    Fornecedor(const QString& nome, const QString& email, 
+    Fornecedor(const QString& nome, const QString& email,
                const QString& cpf, const QString& dataNascimento, const QString& fotoPerfil,
                const QString& certificadoAntecedentes,
                const QStringList& fotosServico, const QString& descricaoTrabalho,
