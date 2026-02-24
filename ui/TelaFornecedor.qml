@@ -26,6 +26,21 @@ Page {
                 Layout.fillWidth: true
             }
 
+            Button{
+                text: "Abrir Chat"
+                highlighted: true
+
+                // CONFIGURAÇÃO DO BOTÃO PARA CHAMAR A TELA DE CHAT
+                onClicked: {
+                    stackView.push("TelaChat.qml", {
+
+                    })
+                }
+
+
+            }
+
+
             Button {
                 text: "Sair"
                 onClicked: {
