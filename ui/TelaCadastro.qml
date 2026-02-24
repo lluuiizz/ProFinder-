@@ -281,8 +281,6 @@ Page {
                             fotoPerfilPath
                         );
                     } else {
-                        // Validate supplier fields
-
                         // Convert services list to QVariantMap format
                         let servicosMap = {}
                         for (let i = 0; i < servicosSelecionadosList.count; i++) {
@@ -302,7 +300,6 @@ Page {
                             cpfInput.text,
                             dataNascimentoInput,
                             fotoPerfilPath,
-                            cpfCnpjInput.text,
                             certificadoPath,
                             fotosList,
                             descricaoInput.text,
