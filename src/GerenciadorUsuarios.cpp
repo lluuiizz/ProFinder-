@@ -196,11 +196,8 @@ QVariantMap GerenciadorUsuarios::getUsuarioLogado() {
 }
 
 QVariantList GerenciadorUsuarios::atualizarListaFornecedores(const QString &termo) {
-    QVariantList list_suppliers;
 
-    list_suppliers = UserRepository::getSuppliersBySearchTerm(termo);
-
-    return list_suppliers;
+    return UserRepository::getSuppliersBySearchTerm(termo);
 }
 
 void GerenciadorUsuarios::fazerLogout() { m_usuarioLogado = nullptr; }
