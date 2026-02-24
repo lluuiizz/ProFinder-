@@ -8,34 +8,44 @@ Page {
     id: buscaPage
 
     property int fornecedorSelecionadoIndex: -1
+    property var detalhesFornecedor: ({})
+
+    // --- NOVO: Variável para guardar os dados originais do C++ ---
+    property var fornecedoresRaw: []
 
     function atualizarLista(termo = "") {
-        let resultados = gerenciador.buscarFornecedoresComIndices(termo);
+        // Recebe o QVariantList do C++ (array de objetos/maps)
+        fornecedoresRaw = gerenciador.atualizarListaFornecedores(termo);
         listaModelo.clear();
-        for (let i = 0; i < resultados.length; i++) {
+
+        for (let i = 0; i < fornecedoresRaw.length; i++) {
+            let f = fornecedoresRaw[i];
+
+            // Monta um subtítulo combinando os nomes dos serviços oferecidos
+            let servicosStr = "";
+            if (f.servicos && f.servicos.length > 0) {
+                servicosStr = f.servicos.map(s => s.nome_servico).join(", ");
+            } else {
+                servicosStr = "Nenhum serviço específico";
+            }
+
             listaModelo.append({
-                "detalhe": resultados[i].display,
-                "index": resultados[i].index,
-                "nome": resultados[i].nome
+                "nomeExibicao": f.nome,
+                "subtitulo": servicosStr + " | " + f.email
             });
         }
     }
 
-    // --- NOVO: CONEXÃO REATIVA ---
     Connections {
         target: gerenciador
-        // No Qt, sinais como 'dadosAlterados' tornam-se 'onDadosAlterados' no QML
         onFornecedorAdicionado: {
             console.log("Banco de dados atualizado! Atualizando lista...")
             atualizarLista(buscaInput.text);
         }
     }
-    // -----------------------------
 
     Component.onCompleted: {
-        // Show all suppliers as soon as the user logs in
         atualizarLista("");
-        // Check if user is logged in, if not redirect to login
         let usuario = gerenciador.getUsuarioLogado();
         if (!usuario.logado || usuario.tipo !== "Cliente") {
             stackView.clear();
@@ -50,31 +60,24 @@ Page {
             anchors.rightMargin: 10
 
             Label {
-                // Chama a nova função C++ sempre que a interface precisar atualizar
                 text: fornecedorSelecionadoIndex >= 0 ? "Detalhes do Fornecedor" : "Buscar Fornecedores"
                 font.pixelSize: 20
                 Layout.fillWidth: true
             }
 
             Label {
-                text: "Total: " + gerenciador.quantidadeFornecedores
+                text: "Total: " + fornecedoresRaw.length
                 font.bold: true
                 color: "#666"
                 visible: fornecedorSelecionadoIndex < 0
             }
 
-            Button{
+            Button {
                 text: "Abrir Chat"
                 highlighted: true
-
-                // CONFIGURAÇÃO DO BOTÃO PARA CHAMAR A TELA DE CHAT
                 onClicked: {
-                    stackView.push("TelaChat.qml", {
-
-                    })
+                    stackView.push("TelaChat.qml", {})
                 }
-
-
             }
 
             Button {
@@ -93,7 +96,7 @@ Page {
         anchors.fill: parent
         currentIndex: fornecedorSelecionadoIndex >= 0 ? 1 : 0
 
-        // Search/List View
+        // --- TELA 0: Search/List View ---
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 20
@@ -104,8 +107,8 @@ Page {
                 TextField {
                     id: buscaInput
                     Layout.fillWidth: true
-                    placeholderText: "Digite o serviço ou nome"
-                    onTextChanged: atualizarLista(text) // Opcional: Busca em tempo real ao digitar
+                    placeholderText: "Digite o serviço, nome ou descrição..."
+                    onTextChanged: atualizarLista(text)
                 }
                 Button {
                     text: "Buscar"
@@ -121,30 +124,31 @@ Page {
                 delegate: ItemDelegate {
                     width: listView.width
                     height: 60
-                    
+
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 10
                         spacing: 5
-                        
+
                         Text {
-                            text: detalhe.split(" - ")[0] // Name
+                            text: model.nomeExibicao
                             font.bold: true
                             font.pixelSize: 14
                         }
-                        
+
                         Text {
-                            text: detalhe.split(" - ").slice(1).join(" - ") // Services, email, CPF/CNPJ
+                            text: model.subtitulo
                             font.pixelSize: 12
                             color: "#666"
                             wrapMode: Text.Wrap
                         }
                     }
-                    
+
                     onClicked: {
-                        fornecedorSelecionadoIndex = model.index
+                        fornecedorSelecionadoIndex = model.index;
+                        // NOVO: Pega o objeto completo diretamente do array bruto, sem fazer nova consulta ao C++!
                         if (fornecedorSelecionadoIndex >= 0) {
-                            detalhesFornecedor = gerenciador.obterDetalhesFornecedor(fornecedorSelecionadoIndex)
+                            detalhesFornecedor = fornecedoresRaw[fornecedorSelecionadoIndex];
                         }
                     }
                 }
@@ -157,7 +161,7 @@ Page {
             }
         }
 
-        // Details View
+        // --- TELA 1: Details View ---
         ScrollView {
             anchors.fill: parent
             contentWidth: parent.width
@@ -170,7 +174,7 @@ Page {
                 anchors.margins: 20
                 spacing: 15
 
-                // Profile Picture
+                // Foto de Perfil
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     width: 150
@@ -179,108 +183,109 @@ Page {
                     border.color: "#999"
                     border.width: 2
                     radius: 5
-                    
+
                     Image {
                         id: fotoPerfilImage
                         anchors.fill: parent
                         anchors.margins: 5
                         fillMode: Image.PreserveAspectFit
-                        source: detalhesFornecedor.fotoPerfil ? "file://" + detalhesFornecedor.fotoPerfil : ""
-                        visible: detalhesFornecedor.fotoPerfil
+                        // Atualizado para a chave retornada pelo BD
+                        source: detalhesFornecedor.foto_perfil ? "file://" + detalhesFornecedor.foto_perfil : ""
+                        visible: !!detalhesFornecedor.foto_perfil
                     }
-                    
+
                     Text {
                         anchors.centerIn: parent
                         text: "Sem foto"
-                        visible: !detalhesFornecedor.fotoPerfil
+                        visible: !detalhesFornecedor.foto_perfil
                         color: "#999"
                     }
                 }
 
-                // Name
                 Label {
-                    text: "Nome: " + detalhesFornecedor.nome
+                    text: "Nome: " + (detalhesFornecedor.nome || "")
                     font.bold: true
                     font.pixelSize: 18
                 }
 
-                // Email
                 Label {
-                    text: "E-mail: " + detalhesFornecedor.email
+                    text: "E-mail: " + (detalhesFornecedor.email || "")
                     font.pixelSize: 14
                 }
 
-                // CPF/CNPJ
                 Label {
-                    text: "CPF/CNPJ: " + detalhesFornecedor.cpfCnpj
+                    // Atualizado para a chave retornada pelo BD
+                    text: "CPF/CNPJ: " + (detalhesFornecedor.cpf_cnpj || "")
                     font.pixelSize: 14
                 }
 
-                // Services
+                // Serviços (Usando o array de objetos JSON retornado pelo Postgres)
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 5
-                    
+                    visible: detalhesFornecedor.servicos && detalhesFornecedor.servicos.length > 0
+
                     Label {
                         text: "Serviços Oferecidos:"
                         font.bold: true
                         font.pixelSize: 14
                     }
-                    
+
                     Repeater {
-                        model: Object.keys(detalhesFornecedor.servicosComAnos || {})
+                        model: detalhesFornecedor.servicos || []
                         delegate: Label {
-                            text: modelData + " - " + detalhesFornecedor.servicosComAnos[modelData] + " anos de experiência"
+                            // modelData agora é um objeto: {nome_servico: "X", anos_experiencia: Y}
+                            text: modelData.nome_servico + " - " + modelData.anos_experiencia + " anos de experiência"
                             font.pixelSize: 12
                             color: "#666"
                         }
                     }
                 }
 
-                // Work Description
+                // Descrição do Trabalho
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 5
-                    visible: detalhesFornecedor.descricaoTrabalho
-                    
+                    visible: !!detalhesFornecedor.descricao_trabalho
+
                     Label {
                         text: "Descrição do Trabalho:"
                         font.bold: true
                         font.pixelSize: 14
                     }
-                    
+
                     Label {
-                        text: detalhesFornecedor.descricaoTrabalho || ""
+                        text: detalhesFornecedor.descricao_trabalho || ""
                         font.pixelSize: 12
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                 }
 
-                // Service Photos
+                // Fotos do Serviço
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 5
-                    visible: detalhesFornecedor.fotosServico && detalhesFornecedor.fotosServico.length > 0
-                    
+                    visible: detalhesFornecedor.fotos_servico && detalhesFornecedor.fotos_servico.length > 0
+
                     Label {
                         text: "Fotos do Serviço:"
                         font.bold: true
                         font.pixelSize: 14
                     }
-                    
+
                     ScrollView {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 200
                         contentWidth: fotosRow.width
                         contentHeight: 200
-                        
+
                         Row {
                             id: fotosRow
                             spacing: 10
-                            
+
                             Repeater {
-                                model: detalhesFornecedor.fotosServico || []
+                                model: detalhesFornecedor.fotos_servico || []
                                 delegate: Rectangle {
                                     width: 180
                                     height: 180
@@ -288,11 +293,12 @@ Page {
                                     border.color: "#999"
                                     border.width: 2
                                     radius: 5
-                                    
+
                                     Image {
                                         anchors.fill: parent
                                         anchors.margins: 5
                                         fillMode: Image.PreserveAspectFit
+                                        // modelData aqui é diretamente a string do caminho da foto
                                         source: modelData ? "file://" + modelData : ""
                                     }
                                 }
@@ -301,10 +307,6 @@ Page {
                     }
                 }
 
-
-
-
-                // Back Button
                 Button {
                     Layout.fillWidth: true
                     text: "Voltar"
@@ -316,7 +318,4 @@ Page {
             }
         }
     }
-
-    // JavaScript property for supplier details
-    property var detalhesFornecedor: ({})
 }
